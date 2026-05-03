@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# MLflow
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Models
+models/*.pkl
+
+# Logs
+logs/
+
+# Virtual env
+venv/
+env/
