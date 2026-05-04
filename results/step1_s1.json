@@ -1,0 +1,20 @@
+{
+  "experiment_name": "shieldops-resolution-hours",
+  "models": [
+    {
+      "name": "SVR",
+      "mae": 8.2089,
+      "rmse": 9.183,
+      "r2": -0.6706
+    },
+    {
+      "name": "GradientBoosting",
+      "mae": 2.3735,
+      "rmse": 2.6114,
+      "r2": 0.8649
+    }
+  ],
+  "best_model": "GradientBoosting",
+  "best_metric_name": "mae",
+  "best_metric_value": 2.3735
+}

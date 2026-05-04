@@ -1,0 +1,13 @@
+{
+  "search_type": "random",
+  "n_folds": 3,
+  "total_trials": 6,
+  "best_params": {
+    "n_estimators": 50,
+    "max_depth": 3,
+    "learning_rate": 0.05
+  },
+  "best_mae": 2.9011,
+  "best_cv_mae": 6.4622,
+  "parent_run_name": "tuning-shieldops"
+}

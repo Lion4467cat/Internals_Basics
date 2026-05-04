@@ -1,0 +1,16 @@
+{
+  "health_endpoint": "/health",
+  "predict_endpoint": "/predict",
+  "port": 9000,
+  "health_response": {
+    "alive": true,
+    "service": "ShieldOps resolution_hours API"
+  },
+  "test_input": {
+    "severity_level": 2,
+    "alerts_count": 25,
+    "analyst_experience": 6,
+    "is_automated": 0
+  },
+  "prediction": 21.6259
+}

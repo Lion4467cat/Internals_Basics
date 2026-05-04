@@ -1,0 +1,7 @@
+{
+  "registered_model_name": "shieldops-resolution-hours-predictor",
+  "version": 1,
+  "run_id": "79e230c858934344a0054ef9b9a1837c",
+  "source_metric": "mae",
+  "source_metric_value": 2.9011
+}

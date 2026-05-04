@@ -1,81 +1,58 @@
-import os
-import json
-import mlflow
-import pandas as pd
-from datetime import datetime, timezone
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
+import joblib
+import numpy as np
+import json
+import os
+
+app = FastAPI(title="ShieldOps Resolution Hours API")
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+model = joblib.load(os.path.join(BASE_DIR, "models", "best_model.pkl"))
 
 
-REGISTERED_NAME = "quickfoods-delivery-predictor"
-CHAMPION_ALIAS = "champion"
-LOG_DIR = "logs"
-LOG_PATH = os.path.join(LOG_DIR, "predictions.jsonl")
-
-app = FastAPI(
-    title="QuickFoods Delivery Time Prediction API",
-    description="Serves the champion model from MLflow Registry",
-    version="3.0.0",
-)
-
-os.makedirs(LOG_DIR, exist_ok=True)
-
-# Load the champion model from the registry
-model_uri = f"models:/{REGISTERED_NAME}@{CHAMPION_ALIAS}"
-print(f"Loading model from: {model_uri}")
-model = mlflow.sklearn.load_model(model_uri)
-print("Model loaded successfully.")
-
-
-class DeliveryRequest(BaseModel):
-    distance_km: float = Field(..., gt=0)
-    items_count: int = Field(..., gt=0)
-    is_peak_hour: int = Field(..., ge=0, le=1)
-    traffic_level: int = Field(..., ge=1, le=3)
-
-
-class PredictionResponse(BaseModel):
-    delivery_time_min: float
-
-
-def log_prediction(request_data: dict, prediction: float):
-    record = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "input": request_data,
-        "prediction": prediction,
-        "model": REGISTERED_NAME,
-        "alias": CHAMPION_ALIAS,
-    }
-    with open(LOG_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record) + "\n")
+class PredictRequest(BaseModel):
+    severity_level: int = Field(..., ge=1, le=5)
+    alerts_count: int = Field(..., ge=1, le=50)
+    analyst_experience: int = Field(..., ge=1, le=15)
+    is_automated: int = Field(..., ge=0, le=1)
 
 
 @app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "model": REGISTERED_NAME,
-        "alias": CHAMPION_ALIAS,
-        "model_uri": model_uri,
+def health():
+    return {"alive": True, "service": "ShieldOps resolution_hours API"}
+
+
+@app.post("/predict")
+def predict(req: PredictRequest):
+    features = np.array(
+        [
+            [
+                req.severity_level,
+                req.alerts_count,
+                req.analyst_experience,
+                req.is_automated,
+            ]
+        ]
+    )
+    prediction = model.predict(features)[0]
+
+    # Save results
+    os.makedirs("results", exist_ok=True)
+    output = {
+        "health_endpoint": "/health",
+        "predict_endpoint": "/predict",
+        "port": 9000,
+        "health_response": {"alive": True, "service": "ShieldOps resolution_hours API"},
+        "test_input": {
+            "severity_level": req.severity_level,
+            "alerts_count": req.alerts_count,
+            "analyst_experience": req.analyst_experience,
+            "is_automated": req.is_automated,
+        },
+        "prediction": round(float(prediction), 4),
     }
+    with open("results/step3_s4.json", "w") as f:
+        json.dump(output, f, indent=2)
 
-
-@app.post("/predict", response_model=PredictionResponse)
-def predict(request: DeliveryRequest):
-    try:
-        input_dict = {
-            "distance_km": request.distance_km,
-            "items_count": request.items_count,
-            "is_peak_hour": request.is_peak_hour,
-            "traffic_level": request.traffic_level,
-        }
-        input_df = pd.DataFrame([input_dict])
-        prediction = round(float(model.predict(input_df)[0]), 2)
-
-        log_prediction(input_dict, prediction)
-
-        return PredictionResponse(delivery_time_min=prediction)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+    return {"prediction": round(float(prediction), 4)}
