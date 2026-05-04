@@ -9,8 +9,7 @@ mlruns/
 mlartifacts/
 mlflow.db
 
-# Models
-models/*.pkl
+
 
 # Logs
 logs/
